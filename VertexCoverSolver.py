@@ -34,11 +34,11 @@ class VertexCoverSolver:
         def __repr__(self) -> str:
             return f"Graph(num_vertices={self.num_vertices}, arestas={self.edges})"
 
-        def all_edges_covered(self, cover: List[bool]) -> bool:
+        def _all_edges_covered(self, cover: List[bool]) -> bool:
             """Verifica se uma dada cobertura de vértices cobre todas as arestas."""
             return all(cover[a] or cover[b] for a, b in self.edges)
 
-        def uncovered_edges_count(self, cover: List[bool]) -> int:
+        def _uncovered_edges_count(self, cover: List[bool]) -> int:
             """Conta o número de arestas não cobertas por uma dada solução."""
             return sum(1 for a, b in self.edges if not (cover[a] or cover[b]))
 
@@ -52,22 +52,51 @@ class VertexCoverSolver:
         """
         self.graph = self.Graph(num_vertices, edges)
         self.memo = {}
+
+    def _find_exact_cover_recursive(self, remaining_edges_fs: frozenset) -> int:
+        """
+        Função recursiva auxiliar que encontra o tamanho da cobertura mínima.
+        """
+        if not remaining_edges_fs:
+            return 0
+        
+        if remaining_edges_fs in self.memo:
+            return self.memo[remaining_edges_fs]
+
+        u, v = next(iter(remaining_edges_fs))
+        
+        # Ramo 1: Adicionar 'u' à cobertura
+        edges_after_removing_u = {edge for edge in remaining_edges_fs if u not in edge}
+        cost1 = 1 + self._find_exact_cover_recursive(frozenset(edges_after_removing_u))
+        
+        # Ramo 2: Adicionar 'v' à cobertura
+        edges_after_removing_v = {edge for edge in remaining_edges_fs if v not in edge}
+        cost2 = 1 + self._find_exact_cover_recursive(frozenset(edges_after_removing_v))
+        
+        result = min(cost1, cost2)
+
+        #revisar se isto é necessário depois
+        self.memo[remaining_edges_fs] = result
+        
+        return result
     
+    # _ts é para a taboo search
     def _initial_solution_ts(self) -> List[bool]:
         """Solução inicial trivial: todos os vértices na cobertura."""
         return [True] * self.graph.num_vertices
 
+    # _ts é para a taboo search
     def _cost_function_ts(self, cover: List[bool], penalty: int) -> int:
         """
         Função de custo para a Busca Tabu.
         Penaliza arestas não cobertas e o tamanho da cobertura.
         """
-        uncovered = self.graph.uncovered_edges_count(cover)
+        uncovered = self.graph._uncovered_edges_count(cover)
         size = sum(cover)
         return uncovered * penalty + size
 
     # --- Algoritmo 1: Aproximação de Fator 2 ---
-    def solve_approximation(self) -> Set[int]:
+    def _solve_approximation(self) -> Set[int]:
         """
         Implementa o algoritmo de aproximação de fator 2.
         Itera sobre as arestas e adiciona ambos os vértices à cobertura se a aresta
@@ -88,8 +117,27 @@ class VertexCoverSolver:
         
         return vertex_cover_set
 
+    # --- Algoritmo 2: Exato Recursivo com Memoização ---
+    def _solve_exact_recursive(self) -> int:
+        """
+        Função principal que inicia a busca pela cobertura mínima exata.
+        Usa recursão com poda e memoização para encontrar a solução ótima.
+        
+        AVISO: Este algoritmo tem complexidade exponencial e é inviável
+        para grafos grandes.
+
+        Returns:
+            int: O tamanho da cobertura de vértices mínima (ótima).
+        """
+        self.memo.clear()  # Limpa o cache para execuções limpas
+        
+        # Normaliza arestas (ex: (1,0) e (0,1) são a mesma coisa) e converte para frozenset
+        edge_set = set(frozenset(edge) for edge in self.graph.edges)
+        
+        return self._find_exact_cover_recursive(frozenset(edge_set))
+
     # --- Algoritmo 3: Busca Tabu (Meta-heurística) ---
-    def solve_tabu_search(
+    def _solve_tabu_search(
         self,
         max_iters: int = 10000,
         tabu_tenure: int = 7,
@@ -156,52 +204,6 @@ class VertexCoverSolver:
         cover_vertices = [i for i, in_cover in enumerate(best) if in_cover]
         return cover_vertices, best_cost
 
-    def _find_exact_cover_recursive(self, remaining_edges_fs: frozenset) -> int:
-        """
-        Função recursiva auxiliar que encontra o tamanho da cobertura mínima.
-        """
-        if not remaining_edges_fs:
-            return 0
-        
-        if remaining_edges_fs in self.memo:
-            return self.memo[remaining_edges_fs]
-
-        u, v = next(iter(remaining_edges_fs))
-        
-        # Ramo 1: Adicionar 'u' à cobertura
-        edges_after_removing_u = {edge for edge in remaining_edges_fs if u not in edge}
-        cost1 = 1 + self._find_exact_cover_recursive(frozenset(edges_after_removing_u))
-        
-        # Ramo 2: Adicionar 'v' à cobertura
-        edges_after_removing_v = {edge for edge in remaining_edges_fs if v not in edge}
-        cost2 = 1 + self._find_exact_cover_recursive(frozenset(edges_after_removing_v))
-        
-        result = min(cost1, cost2)
-
-        #revisar se isto é necessário depois
-        self.memo[remaining_edges_fs] = result
-        
-        return result
-    
-    # --- Algoritmo 2: Exato Recursivo com Memoização ---
-    def solve_exact_recursive(self) -> int:
-        """
-        Função principal que inicia a busca pela cobertura mínima exata.
-        Usa recursão com poda e memoização para encontrar a solução ótima.
-        
-        AVISO: Este algoritmo tem complexidade exponencial e é inviável
-        para grafos grandes.
-
-        Returns:
-            int: O tamanho da cobertura de vértices mínima (ótima).
-        """
-        self.memo.clear()  # Limpa o cache para execuções limpas
-        
-        # Normaliza arestas (ex: (1,0) e (0,1) são a mesma coisa) e converte para frozenset
-        edge_set = set(frozenset(edge) for edge in self.graph.edges)
-        
-        return self._find_exact_cover_recursive(frozenset(edge_set))
-
 
 # --- Bloco de Teste ---
 if __name__ == "__main__":
@@ -216,23 +218,23 @@ if __name__ == "__main__":
     solver_g1 = VertexCoverSolver(num_vertices_g1, arestas_g1)
     
     print("=" * 50)
-    print(f"TESTANDO GRAFO 1: {solver_g1.graph}")
+    #print(f"TESTANDO GRAFO 1: {solver_g1.graph}")
     print("=" * 50)
 
     # 1. Testando o Algoritmo de Aproximação
     print("\n--- 1. Algoritmo de Aproximação (Fator 2) ---")
-    approx_cover = solver_g1.solve_approximation()
-    print(f"Cobertura encontrada: {sorted(list(approx_cover))}")
+    approx_cover = solver_g1._solve_approximation()
+    #print(f"Cobertura encontrada: {sorted(list(approx_cover))}")
     print(f"Tamanho da cobertura: {len(approx_cover)}")
 
     # 2. Testando a Busca Tabu
     print("\n--- 2. Busca Tabu ---")
-    ts_cover, ts_cost = solver_g1.solve_tabu_search(max_iters=5000, rng_seed=42)
-    print(f"Cobertura encontrada: {sorted(ts_cover)}")
+    ts_cover, ts_cost = solver_g1._solve_tabu_search(max_iters=5000, rng_seed=42)
+    #print(f"Cobertura encontrada: {sorted(ts_cover)}")
     print(f"Custo final da solução: {ts_cost}")
     # Verificação final
     cover_bool = [i in ts_cover for i in range(solver_g1.graph.num_vertices)]
-    print(f"Todas as arestas estão cobertas? {solver_g1.graph.all_edges_covered(cover_bool)}")
+    print(f"Todas as arestas estão cobertas? {solver_g1.graph._all_edges_covered(cover_bool)}")
 
     # ----------------------------------------------------------------------------------
 
@@ -247,11 +249,12 @@ if __name__ == "__main__":
     solver_g2 = VertexCoverSolver(num_vertices_g2, arestas_g2)
     
     print("\n" + "=" * 50)
-    print(f"TESTANDO GRAFO 2: {solver_g2.graph}")
+    #print(f"TESTANDO GRAFO 2: {solver_g2.graph}")
     print("=" * 50)
     
     # 3. Testando o Algoritmo Exato Recursivo
     # Nota: Este algoritmo é muito lento para o Grafo 1, por isso usamos o Grafo 2.
-    print("\n--- 3. Algoritmo Exato (Recursivo com Memoização) ---")
-    optimal_size = solver_g2.solve_exact_recursive()
-    print(f"Tamanho da Cobertura MÍNIMA (Ótima): {optimal_size}")
+    
+    #print("\n--- 3. Algoritmo Exato (Recursivo com Memoização) ---")
+    #optimal_size = solver_g2._solve_exact_recursive()
+    #print(f"Tamanho da Cobertura MÍNIMA (Ótima): {optimal_size}")
