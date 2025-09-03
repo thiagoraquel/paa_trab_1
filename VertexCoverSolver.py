@@ -421,15 +421,29 @@ if __name__ == "__main__":
     solver_er30 = VertexCoverSolver._from_generated_file(caminho_arquivo_er30)
     
     if solver_er30:
-        # Agora você pode rodar seus algoritmos normalmente
+        # --- 1. Algoritmo de Aproximação (Fator 2) ---
         print("\n--- 1. Algoritmo de Aproximação (Fator 2) ---")
         approx_cover = solver_er30._solve_approximation()
-        print(f"Tamanho da cobertura encontrada: {len(approx_cover)}")
+        print(f"Vértices encontrados: {sorted(list(approx_cover))}")
+        print(f"Tamanho da cobertura: {len(approx_cover)}")
+        # Visualização
+        visualizar_grafo_com_cobertura(solver_er30, approx_cover, "Cobertura - Algoritmo de Aproximação")
 
+        # --- 2. Algoritmo Exato ---
         print("\n--- 2. Algoritmo Exato ---")
-        optimal_size = solver_er30._solve_exact_with_nodes()
-        print(f"Tamanho da cobertura encontrada: {optimal_size}")
+        # Chamando a nova função que retorna os nós
+        optimal_cover_nodes = solver_er30._solve_exact_with_nodes()
+        print(f"Vértices encontrados: {sorted(list(optimal_cover_nodes))}")
+        print(f"Tamanho da cobertura ótima: {len(optimal_cover_nodes)}")
+        # Visualização
+        visualizar_grafo_com_cobertura(solver_er30, optimal_cover_nodes, "Cobertura - Algoritmo Exato (Ótimo)")
         
+        # --- 3. Busca Tabu ---
         print("\n--- 3. Busca Tabu ---")
         ts_cover, ts_cost = solver_er30._solve_tabu_search(max_iters=1000, rng_seed=42)
-        print(f"Custo final da solução: {ts_cost}")
+        print(f"Vértices encontrados: {sorted(ts_cover)}")
+        # O custo da busca tabu inclui penalidades, o tamanho real é len(ts_cover)
+        print(f"Tamanho da cobertura: {len(ts_cover)}")
+        print(f"Custo final da solução (tamanho + penalidades): {ts_cost}")
+        # Visualização
+        visualizar_grafo_com_cobertura(solver_er30, set(ts_cover), "Cobertura - Busca Tabu")
