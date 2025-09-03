@@ -1,4 +1,5 @@
 import random
+import networkx
 from typing import List, Tuple, Dict, Optional, Set
 
 class VertexCoverSolver:
@@ -10,6 +11,69 @@ class VertexCoverSolver:
         graph (Graph): O objeto de grafo no qual os algoritmos serão executados.
         memo (Dict): Um cache para memoização usado pelo algoritmo exato.
     """
+    @classmethod
+    def _from_snap_file(cls, filepath: str):
+        """
+        Cria uma instância de VertexCoverSolver a partir de um arquivo de texto no formato SNAP.
+        Este método lida com IDs de vértices não sequenciais e arestas duplicadas.
+
+        Args:
+            filepath (str): O caminho para o arquivo .txt do dataset.
+
+        Returns:
+            VertexCoverSolver: Uma nova instância da classe com o grafo carregado e mapeado.
+        """
+        unique_edges = set()
+        all_node_ids = set()
+
+        print(f"Lendo o arquivo de grafo: {filepath}...")
+        with open(filepath, 'r') as f:
+            for line in f:
+                if line.startswith('#'):
+                    continue
+                try:
+                    u_str, v_str = line.strip().split()
+                    u_orig, v_orig = int(u_str), int(v_str)
+                    
+                    # Ignora laços (arestas de um nó para ele mesmo)
+                    if u_orig == v_orig:
+                        continue
+
+                    all_node_ids.add(u_orig)
+                    all_node_ids.add(v_orig)
+                    
+                    # Normaliza a aresta para evitar duplicatas (ex: (1,0) e (0,1))
+                    edge = tuple(sorted((u_orig, v_orig)))
+                    unique_edges.add(edge)
+                except ValueError:
+                    # Ignora linhas mal formatadas
+                    continue
+        
+        # --- Mapeamento de IDs Originais para Novos IDs (0 a N-1) ---
+        # Ordenar garante que o mapeamento seja sempre o mesmo
+        sorted_original_ids = sorted(list(all_node_ids))
+        
+        # Mapa para converter IDs originais para os novos, internos ao algoritmo
+        map_original_to_new = {original_id: new_id for new_id, original_id in enumerate(sorted_original_ids)}
+        
+        # Lista para converter os resultados de volta para os IDs originais
+        # O índice da lista é o novo ID, o valor é o ID original.
+        list_new_to_original = sorted_original_ids
+        
+        # --- Remapeia as arestas para usar os novos IDs ---
+        remapped_edges = []
+        for u_orig, v_orig in unique_edges:
+            new_u = map_original_to_new[u_orig]
+            new_v = map_original_to_new[v_orig]
+            remapped_edges.append((new_u, new_v))
+            
+        num_vertices = len(all_node_ids)
+        print(f"Grafo carregado com sucesso!")
+        print(f"  - Vértices únicos: {num_vertices}")
+        print(f"  - Arestas únicas: {len(remapped_edges)}")
+        
+        # Cria a instância da classe com os dados processados e o mapa de tradução
+        return cls(num_vertices, remapped_edges, list_new_to_original)
 
     class Graph:
         """
@@ -42,7 +106,7 @@ class VertexCoverSolver:
             """Conta o número de arestas não cobertas por uma dada solução."""
             return sum(1 for a, b in self.edges if not (cover[a] or cover[b]))
 
-    def __init__(self, num_vertices: int, edges: List[Tuple[int, int]]):
+    def __init__(self, num_vertices: int, edges: List[Tuple[int, int]], new_to_original_map: Optional[List[int]] = None):
         """
         Inicializa o solucionador com um grafo específico.
 
@@ -52,6 +116,20 @@ class VertexCoverSolver:
         """
         self.graph = self.Graph(num_vertices, edges)
         self.memo = {}
+        # Armazena o mapa para traduzir os resultados de volta
+        self.new_to_original_map = new_to_original_map
+
+        # --- NOVO MÉTODO para traduzir resultados ---
+    def _remap_cover_to_original(self, cover_new_ids: List[int]) -> List[int]:
+        """
+        Converte uma cobertura de vértices com IDs internos (0 a N-1) de volta
+        para os IDs originais do arquivo.
+        """
+        if self.new_to_original_map is None:
+            print("Aviso: Grafo não foi criado a partir de um arquivo, retornando IDs internos.")
+            return cover_new_ids
+        
+        return [self.new_to_original_map[new_id] for new_id in cover_new_ids]
 
     def _find_exact_cover_recursive(self, remaining_edges_fs: frozenset) -> int:
         """
@@ -139,7 +217,7 @@ class VertexCoverSolver:
     # --- Algoritmo 3: Busca Tabu (Meta-heurística) ---
     def _solve_tabu_search(
         self,
-        max_iters: int = 10000,
+        max_iters: int = 500,
         tabu_tenure: int = 7,
         penalty: int = 1000,
         rng_seed: Optional[int] = None
@@ -258,3 +336,31 @@ if __name__ == "__main__":
     #print("\n--- 3. Algoritmo Exato (Recursivo com Memoização) ---")
     #optimal_size = solver_g2._solve_exact_recursive()
     #print(f"Tamanho da Cobertura MÍNIMA (Ótima): {optimal_size}")
+
+        # --- Uso do novo método ---
+    # Agora, em vez de criar o grafo manualmente, usamos o método de fábrica
+    solver_snap = VertexCoverSolver._from_snap_file('CA-GrQc2.txt')
+    
+    print("\n" + "=" * 50)
+    print("TESTANDO GRAFO CARREGADO DO ARQUIVO SNAP")
+    #print(f"Objeto Graph interno: {solver_snap.graph}")
+    print(f"Número de vértices do grafo: {solver_snap.graph.num_vertices}")
+    print("=" * 50)
+
+    # 1. Testando o Algoritmo de Aproximação (é rápido, ideal para grafos grandes)
+    print("\n--- 1. Algoritmo de Aproximação (Fator 2) ---")
+    approx_cover_new_ids = solver_snap._solve_approximation()
+    
+    # Converte os IDs da cobertura de volta para os IDs originais do arquivo
+    approx_cover_original_ids = solver_snap._remap_cover_to_original(sorted(list(approx_cover_new_ids)))
+    
+    print(f"Tamanho da cobertura encontrada: {len(approx_cover_original_ids)}")
+
+    # 2. Testando a Busca Tabu
+    print("\n--- 2. Busca Tabu ---")
+    ts_cover, ts_cost = solver_snap._solve_tabu_search(max_iters=500, rng_seed=42)
+    #print(f"Cobertura encontrada: {sorted(ts_cover)}")
+    print(f"Custo final da solução: {ts_cost}")
+    # Verificação final
+    cover_bool = [i in ts_cover for i in range(solver_snap.graph.num_vertices)]
+    print(f"Todas as arestas estão cobertas? {solver_snap.graph._all_edges_covered(cover_bool)}")
