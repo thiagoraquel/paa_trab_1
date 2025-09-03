@@ -1,5 +1,6 @@
 import random
-import networkx
+import matplotlib.pyplot as plt
+import networkx as nx
 from typing import List, Tuple, Dict, Optional, Set
 
 class VertexCoverSolver:
@@ -265,24 +266,42 @@ class VertexCoverSolver:
         
         return vertex_cover_set
 
-    # --- Algoritmo 2: Exato Recursivo com Memoização ---
-    def _solve_exact_recursive(self) -> int:
+    # --- Algoritmo 2: Exato Recursivo (MODIFICADO PARA RETORNAR OS VÉRTICES) ---
+    def _find_exact_cover_nodes_recursive(self, remaining_edges_fs: frozenset) -> frozenset:
         """
-        Função principal que inicia a busca pela cobertura mínima exata.
-        Usa recursão com poda e memoização para encontrar a solução ótima.
+        Função recursiva que encontra o CONJUNTO de vértices da cobertura mínima.
+        """
+        if not remaining_edges_fs:
+            return frozenset()
         
-        AVISO: Este algoritmo tem complexidade exponencial e é inviável
-        para grafos grandes.
+        if remaining_edges_fs in self.memo:
+            return self.memo[remaining_edges_fs]
 
-        Returns:
-            int: O tamanho da cobertura de vértices mínima (ótima).
+        # Pega uma aresta qualquer para decidir
+        u, v = next(iter(remaining_edges_fs))
+        
+        # Ramo 1: Adicionar 'u' à cobertura
+        edges_after_removing_u = frozenset({edge for edge in remaining_edges_fs if u not in edge})
+        cover1 = {u}.union(self._find_exact_cover_nodes_recursive(edges_after_removing_u))
+        
+        # Ramo 2: Adicionar 'v' à cobertura
+        edges_after_removing_v = frozenset({edge for edge in remaining_edges_fs if v not in edge})
+        cover2 = {v}.union(self._find_exact_cover_nodes_recursive(edges_after_removing_v))
+        
+        # Escolhe a cobertura de menor tamanho
+        result = cover1 if len(cover1) < len(cover2) else cover2
+        self.memo[remaining_edges_fs] = result
+        
+        return result
+
+    def _solve_exact_with_nodes(self) -> Set[int]:
         """
-        self.memo.clear()  # Limpa o cache para execuções limpas
-        
-        # Normaliza arestas (ex: (1,0) e (0,1) são a mesma coisa) e converte para frozenset
-        edge_set = set(frozenset(edge) for edge in self.graph.edges)
-        
-        return self._find_exact_cover_recursive(frozenset(edge_set))
+        Função principal que inicia a busca pela cobertura mínima exata,
+        retornando o conjunto de vértices.
+        """
+        self.memo.clear()
+        edge_set = frozenset(map(frozenset, self.graph.edges))
+        return self._find_exact_cover_nodes_recursive(edge_set)
 
     # --- Algoritmo 3: Busca Tabu (Meta-heurística) ---
     def _solve_tabu_search(
@@ -352,8 +371,43 @@ class VertexCoverSolver:
         cover_vertices = [i for i, in_cover in enumerate(best) if in_cover]
         return cover_vertices, best_cost
 
-# No seu arquivo principal, onde a classe VertexCoverSolver está definida
-# ... (código da sua classe, incluindo o novo método _from_generated_file)
+def visualizar_grafo_com_cobertura(solver: VertexCoverSolver, cover_nodes: Set[int], title: str):
+    """
+    Cria e exibe uma visualização de um grafo, destacando os nós da cobertura.
+
+    Args:
+        solver (VertexCoverSolver): A instância do solver contendo o grafo.
+        cover_nodes (Set[int]): Um conjunto com os IDs dos vértices na cobertura.
+        title (str): O título do gráfico.
+    """
+    # Cria um objeto de grafo do networkx a partir dos dados do solver
+    g = nx.Graph()
+    g.add_nodes_from(range(solver.graph.num_vertices))
+    g.add_edges_from(solver.graph.edges)
+
+    # Define as cores dos nós: vermelho para cobertura, azul para os demais
+    node_colors = []
+    for node in g.nodes():
+        if node in cover_nodes:
+            node_colors.append('tomato')  # Cor para nós na cobertura
+        else:
+            node_colors.append('skyblue') # Cor para nós fora da cobertura
+
+    plt.figure(figsize=(12, 10))
+    
+    # Usa um layout que tenta evitar sobreposição de nós
+    pos = nx.spring_layout(g, seed=42)
+    
+    # Desenha o grafo
+    nx.draw(g, pos,
+            with_labels=True,      # Mostra os IDs dos vértices
+            node_color=node_colors,  # Aplica a lista de cores
+            node_size=600,         # Tamanho dos nós
+            font_size=10,          # Tamanho da fonte dos IDs
+            width=1.5)             # Largura das arestas
+
+    plt.title(title, size=16)
+    plt.show()
 
 # --- Bloco de Teste ---
 if __name__ == "__main__":
@@ -373,7 +427,7 @@ if __name__ == "__main__":
         print(f"Tamanho da cobertura encontrada: {len(approx_cover)}")
 
         print("\n--- 2. Algoritmo Exato ---")
-        optimal_size = solver_er30._solve_exact_recursive()
+        optimal_size = solver_er30._solve_exact_with_nodes()
         print(f"Tamanho da cobertura encontrada: {optimal_size}")
         
         print("\n--- 3. Busca Tabu ---")
