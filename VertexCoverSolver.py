@@ -12,6 +12,76 @@ class VertexCoverSolver:
         memo (Dict): Um cache para memoização usado pelo algoritmo exato.
     """
     @classmethod
+    def _from_generated_file(cls, filepath: str):
+        """
+        Cria uma instância de VertexCoverSolver a partir de um arquivo .txt
+        gerado por um dos modelos (Erdos-Renyi, etc.). Este método assume
+        que os IDs dos vértices são sequenciais a partir de 0 e que não há
+        arestas duplicadas ou laços no arquivo.
+
+        Args:
+            filepath (str): O caminho para o arquivo .txt do grafo gerado.
+
+        Returns:
+            VertexCoverSolver: Uma nova instância da classe com o grafo carregado.
+        """
+        edges = []
+        max_vertex_id = -1
+
+        print(f"Lendo o arquivo de grafo gerado: {filepath}...")
+        try:
+            with open(filepath, 'r') as f:
+                for line in f:
+                    # Ignora linhas de comentário que começam com '#'
+                    if line.startswith('#'):
+                        continue
+                    
+                    # Ignora linhas em branco
+                    if not line.strip():
+                        continue
+
+                    try:
+                        u_str, v_str = line.strip().split()
+                        u, v = int(u_str), int(v_str)
+                        
+                        edges.append((u, v))
+                        
+                        # Mantém o controle do maior ID de vértice encontrado
+                        current_max = max(u, v)
+                        if current_max > max_vertex_id:
+                            max_vertex_id = current_max
+                            
+                    except ValueError:
+                        print(f"Aviso: Ignorando linha mal formatada: '{line.strip()}'")
+                        continue
+            
+            # O número de vértices em um grafo 0-indexado é o maior ID + 1.
+            # Se o grafo estiver vazio, max_vertex_id será -1, resultando em 0 vértices.
+            num_vertices = max_vertex_id + 1
+            
+            # Se não houver arestas e nenhum vértice, num_vertices será 0.
+            # Se um grafo tiver vértices isolados, eles podem não estar na lista de arestas.
+            # Os cabeçalhos do nosso arquivo gerado ajudam a verificar isso.
+            # Para este método simplificado, confiamos que N = max_id + 1.
+            if num_vertices == 0 and edges:
+                 raise ValueError("Erro: Arestas encontradas, mas nenhum vértice válido foi identificado.")
+
+            print("Grafo carregado com sucesso!")
+            print(f"  - Vértices: {num_vertices}")
+            print(f"  - Arestas: {len(edges)}")
+            
+            # Como não há remapeamento, o mapa de tradução é None.
+            # A classe já lida com isso.
+            return cls(num_vertices, edges)
+
+        except FileNotFoundError:
+            print(f"Erro: Arquivo não encontrado em '{filepath}'")
+            return None
+        except Exception as e:
+            print(f"Ocorreu um erro inesperado ao ler o arquivo: {e}")
+            return None
+
+    @classmethod
     def _from_snap_file(cls, filepath: str):
         """
         Cria uma instância de VertexCoverSolver a partir de um arquivo de texto no formato SNAP.
@@ -217,7 +287,7 @@ class VertexCoverSolver:
     # --- Algoritmo 3: Busca Tabu (Meta-heurística) ---
     def _solve_tabu_search(
         self,
-        max_iters: int = 500,
+        max_iters: int = 10000,
         tabu_tenure: int = 7,
         penalty: int = 1000,
         rng_seed: Optional[int] = None
@@ -282,85 +352,30 @@ class VertexCoverSolver:
         cover_vertices = [i for i, in_cover in enumerate(best) if in_cover]
         return cover_vertices, best_cost
 
+# No seu arquivo principal, onde a classe VertexCoverSolver está definida
+# ... (código da sua classe, incluindo o novo método _from_generated_file)
 
 # --- Bloco de Teste ---
 if __name__ == "__main__":
-    # Grafo de exemplo 1: Um pouco mais complexo para testar os algoritmos
-    num_vertices_g1 = 6
-    arestas_g1 = [
-        (0, 1), (0, 2), (1, 3), (2, 3),
-        (2, 4), (3, 4), (4, 5)
-    ]
     
-    # Inicializa o solucionador para o primeiro grafo
-    solver_g1 = VertexCoverSolver(num_vertices_g1, arestas_g1)
-    
+    # Use o novo método para carregar os arquivos gerados
     print("=" * 50)
-    #print(f"TESTANDO GRAFO 1: {solver_g1.graph}")
-    print("=" * 50)
-
-    # 1. Testando o Algoritmo de Aproximação
-    print("\n--- 1. Algoritmo de Aproximação (Fator 2) ---")
-    approx_cover = solver_g1._solve_approximation()
-    #print(f"Cobertura encontrada: {sorted(list(approx_cover))}")
-    print(f"Tamanho da cobertura: {len(approx_cover)}")
-
-    # 2. Testando a Busca Tabu
-    print("\n--- 2. Busca Tabu ---")
-    ts_cover, ts_cost = solver_g1._solve_tabu_search(max_iters=5000, rng_seed=42)
-    #print(f"Cobertura encontrada: {sorted(ts_cover)}")
-    print(f"Custo final da solução: {ts_cost}")
-    # Verificação final
-    cover_bool = [i in ts_cover for i in range(solver_g1.graph.num_vertices)]
-    print(f"Todas as arestas estão cobertas? {solver_g1.graph._all_edges_covered(cover_bool)}")
-
-    # ----------------------------------------------------------------------------------
-
-    # Grafo de exemplo 2: Pequeno, adequado para o algoritmo exato
-    num_vertices_g2 = 4
-    arestas_g2 = [
-        (0, 1), (0, 2), (0, 3),
-        (1, 2)
-    ]
+    print("Testando grafo Erdos-Renyi com 30 vértices (método simplificado)")
+    caminho_arquivo_er30 = 'grafos_de_teste/erdos_renyi_n30_p0.2.txt'
     
-    # Inicializa o solucionador para o segundo grafo
-    solver_g2 = VertexCoverSolver(num_vertices_g2, arestas_g2)
+    # Chamando o novo método, mais eficiente
+    solver_er30 = VertexCoverSolver._from_generated_file(caminho_arquivo_er30)
     
-    print("\n" + "=" * 50)
-    #print(f"TESTANDO GRAFO 2: {solver_g2.graph}")
-    print("=" * 50)
-    
-    # 3. Testando o Algoritmo Exato Recursivo
-    # Nota: Este algoritmo é muito lento para o Grafo 1, por isso usamos o Grafo 2.
-    
-    #print("\n--- 3. Algoritmo Exato (Recursivo com Memoização) ---")
-    #optimal_size = solver_g2._solve_exact_recursive()
-    #print(f"Tamanho da Cobertura MÍNIMA (Ótima): {optimal_size}")
+    if solver_er30:
+        # Agora você pode rodar seus algoritmos normalmente
+        print("\n--- 1. Algoritmo de Aproximação (Fator 2) ---")
+        approx_cover = solver_er30._solve_approximation()
+        print(f"Tamanho da cobertura encontrada: {len(approx_cover)}")
 
-        # --- Uso do novo método ---
-    # Agora, em vez de criar o grafo manualmente, usamos o método de fábrica
-    solver_snap = VertexCoverSolver._from_snap_file('CA-GrQc2.txt')
-    
-    print("\n" + "=" * 50)
-    print("TESTANDO GRAFO CARREGADO DO ARQUIVO SNAP")
-    #print(f"Objeto Graph interno: {solver_snap.graph}")
-    print(f"Número de vértices do grafo: {solver_snap.graph.num_vertices}")
-    print("=" * 50)
-
-    # 1. Testando o Algoritmo de Aproximação (é rápido, ideal para grafos grandes)
-    print("\n--- 1. Algoritmo de Aproximação (Fator 2) ---")
-    approx_cover_new_ids = solver_snap._solve_approximation()
-    
-    # Converte os IDs da cobertura de volta para os IDs originais do arquivo
-    approx_cover_original_ids = solver_snap._remap_cover_to_original(sorted(list(approx_cover_new_ids)))
-    
-    print(f"Tamanho da cobertura encontrada: {len(approx_cover_original_ids)}")
-
-    # 2. Testando a Busca Tabu
-    print("\n--- 2. Busca Tabu ---")
-    ts_cover, ts_cost = solver_snap._solve_tabu_search(max_iters=500, rng_seed=42)
-    #print(f"Cobertura encontrada: {sorted(ts_cover)}")
-    print(f"Custo final da solução: {ts_cost}")
-    # Verificação final
-    cover_bool = [i in ts_cover for i in range(solver_snap.graph.num_vertices)]
-    print(f"Todas as arestas estão cobertas? {solver_snap.graph._all_edges_covered(cover_bool)}")
+        print("\n--- 2. Algoritmo Exato ---")
+        optimal_size = solver_er30._solve_exact_recursive()
+        print(f"Tamanho da cobertura encontrada: {optimal_size}")
+        
+        print("\n--- 3. Busca Tabu ---")
+        ts_cover, ts_cost = solver_er30._solve_tabu_search(max_iters=1000, rng_seed=42)
+        print(f"Custo final da solução: {ts_cost}")
