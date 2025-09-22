@@ -414,9 +414,11 @@ if __name__ == "__main__":
     
     # Use o novo método para carregar os arquivos gerados
     print("=" * 50)
-    print("Testando grafo Erdos-Renyi com 30 vértices (método simplificado)")
-    caminho_arquivo_er30 = 'grafos_de_teste/erdos_renyi_n30_p0.2.txt'
-    
+    print("Testando grafo Erdos-Renyi com 34 vértices (método simplificado)")
+    #caminho_arquivo_er30 = 'grafos_de_teste/erdos_renyi_n35_p0.2.txt'
+    #caminho_arquivo_er30 = 'grafos_de_teste/barabasi_albert_n35_m3.txt'
+    caminho_arquivo_er30 = 'grafos_de_teste/watts_strogatz_n35_k4_p0.25.txt'
+
     # Chamando o novo método, mais eficiente
     solver_er30 = VertexCoverSolver._from_generated_file(caminho_arquivo_er30)
     

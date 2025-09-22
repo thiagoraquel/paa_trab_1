@@ -40,7 +40,7 @@ def salvar_grafo_em_txt(g: nx.Graph, nome_modelo: str, parametros: dict, pasta_d
 
 # --- Bloco Principal para Gerar os Arquivos ---
 if __name__ == "__main__":
-    tamanhos_dos_grafos = [30, 60, 90]
+    tamanhos_dos_grafos = [37, 38, 39]
     pasta = 'grafos_de_teste'
     
     print("="*60)
