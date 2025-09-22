@@ -4,9 +4,10 @@ import networkx as nx
 from typing import List, Tuple, Dict, Optional, Set
 
 class VertexCoverSolver:
-    """
-    Superclasse que encapsula diferentes algoritmos para resolver o problema de
-    cobertura de vértices em um grafo.
+    """Superclasse para algoritmos de cobertura de vértices.
+
+    Esta classe serve como base para encapsular diferentes algoritmos que resolvem
+    o problema de cobertura de vértices em um grafo.
 
     Atributos:
         graph (Graph): O objeto de grafo no qual os algoritmos serão executados.
@@ -82,70 +83,6 @@ class VertexCoverSolver:
             print(f"Ocorreu um erro inesperado ao ler o arquivo: {e}")
             return None
 
-    @classmethod
-    def _from_snap_file(cls, filepath: str):
-        """
-        Cria uma instância de VertexCoverSolver a partir de um arquivo de texto no formato SNAP.
-        Este método lida com IDs de vértices não sequenciais e arestas duplicadas.
-
-        Args:
-            filepath (str): O caminho para o arquivo .txt do dataset.
-
-        Returns:
-            VertexCoverSolver: Uma nova instância da classe com o grafo carregado e mapeado.
-        """
-        unique_edges = set()
-        all_node_ids = set()
-
-        print(f"Lendo o arquivo de grafo: {filepath}...")
-        with open(filepath, 'r') as f:
-            for line in f:
-                if line.startswith('#'):
-                    continue
-                try:
-                    u_str, v_str = line.strip().split()
-                    u_orig, v_orig = int(u_str), int(v_str)
-                    
-                    # Ignora laços (arestas de um nó para ele mesmo)
-                    if u_orig == v_orig:
-                        continue
-
-                    all_node_ids.add(u_orig)
-                    all_node_ids.add(v_orig)
-                    
-                    # Normaliza a aresta para evitar duplicatas (ex: (1,0) e (0,1))
-                    edge = tuple(sorted((u_orig, v_orig)))
-                    unique_edges.add(edge)
-                except ValueError:
-                    # Ignora linhas mal formatadas
-                    continue
-        
-        # --- Mapeamento de IDs Originais para Novos IDs (0 a N-1) ---
-        # Ordenar garante que o mapeamento seja sempre o mesmo
-        sorted_original_ids = sorted(list(all_node_ids))
-        
-        # Mapa para converter IDs originais para os novos, internos ao algoritmo
-        map_original_to_new = {original_id: new_id for new_id, original_id in enumerate(sorted_original_ids)}
-        
-        # Lista para converter os resultados de volta para os IDs originais
-        # O índice da lista é o novo ID, o valor é o ID original.
-        list_new_to_original = sorted_original_ids
-        
-        # --- Remapeia as arestas para usar os novos IDs ---
-        remapped_edges = []
-        for u_orig, v_orig in unique_edges:
-            new_u = map_original_to_new[u_orig]
-            new_v = map_original_to_new[v_orig]
-            remapped_edges.append((new_u, new_v))
-            
-        num_vertices = len(all_node_ids)
-        print(f"Grafo carregado com sucesso!")
-        print(f"  - Vértices únicos: {num_vertices}")
-        print(f"  - Arestas únicas: {len(remapped_edges)}")
-        
-        # Cria a instância da classe com os dados processados e o mapa de tradução
-        return cls(num_vertices, remapped_edges, list_new_to_original)
-
     class Graph:
         """
         Representa um grafo não direcionado simples. É uma subclasse interna
@@ -166,41 +103,13 @@ class VertexCoverSolver:
                 self.list_adj[a].append(b)
                 self.list_adj[b].append(a)
 
-        def __repr__(self) -> str:
-            return f"Graph(num_vertices={self.num_vertices}, arestas={self.edges})"
-
-        def _all_edges_covered(self, cover: List[bool]) -> bool:
-            """Verifica se uma dada cobertura de vértices cobre todas as arestas."""
-            return all(cover[a] or cover[b] for a, b in self.edges)
+        #def _all_edges_covered(self, cover: List[bool]) -> bool:
+            #"""Verifica se uma dada cobertura de vértices cobre todas as arestas."""
+            #return all(cover[a] or cover[b] for a, b in self.edges)
 
         def _uncovered_edges_count(self, cover: List[bool]) -> int:
             """Conta o número de arestas não cobertas por uma dada solução."""
             return sum(1 for a, b in self.edges if not (cover[a] or cover[b]))
-
-    def __init__(self, num_vertices: int, edges: List[Tuple[int, int]], new_to_original_map: Optional[List[int]] = None):
-        """
-        Inicializa o solucionador com um grafo específico.
-
-        Args:
-            num_vertices (int): O número de vértices no grafo.
-            edges (List[Tuple[int, int]]): A lista de arestas do grafo.
-        """
-        self.graph = self.Graph(num_vertices, edges)
-        self.memo = {}
-        # Armazena o mapa para traduzir os resultados de volta
-        self.new_to_original_map = new_to_original_map
-
-        # --- NOVO MÉTODO para traduzir resultados ---
-    def _remap_cover_to_original(self, cover_new_ids: List[int]) -> List[int]:
-        """
-        Converte uma cobertura de vértices com IDs internos (0 a N-1) de volta
-        para os IDs originais do arquivo.
-        """
-        if self.new_to_original_map is None:
-            print("Aviso: Grafo não foi criado a partir de um arquivo, retornando IDs internos.")
-            return cover_new_ids
-        
-        return [self.new_to_original_map[new_id] for new_id in cover_new_ids]
 
     def _find_exact_cover_recursive(self, remaining_edges_fs: frozenset) -> int:
         """
@@ -412,14 +321,12 @@ def visualizar_grafo_com_cobertura(solver: VertexCoverSolver, cover_nodes: Set[i
 # --- Bloco de Teste ---
 if __name__ == "__main__":
     
-    # Use o novo método para carregar os arquivos gerados
     print("=" * 50)
     print("Testando grafo Erdos-Renyi com 34 vértices (método simplificado)")
     #caminho_arquivo_er30 = 'grafos_de_teste/erdos_renyi_n35_p0.2.txt'
     #caminho_arquivo_er30 = 'grafos_de_teste/barabasi_albert_n35_m3.txt'
     caminho_arquivo_er30 = 'grafos_de_teste/watts_strogatz_n35_k4_p0.25.txt'
 
-    # Chamando o novo método, mais eficiente
     solver_er30 = VertexCoverSolver._from_generated_file(caminho_arquivo_er30)
     
     if solver_er30:
