@@ -1,6 +1,6 @@
 # Modelo: Watts Strogatz
-# Parâmetros: {'n': 35, 'k': 4, 'p': 0.25}
-# Vértices: 35
+# Parametros: {'n': 35, 'k': 4, 'p': 0.25}
+# Vertices: 35
 # Arestas: 70
 # FromNodeId	ToNodeId
 0	1

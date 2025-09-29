@@ -1,6 +1,6 @@
 # Modelo: Barabasi Albert
-# Parâmetros: {'n': 35, 'm': 3}
-# Vértices: 35
+# Parametros: {'n': 35, 'm': 3}
+# Vertices: 35
 # Arestas: 96
 # FromNodeId	ToNodeId
 0	1

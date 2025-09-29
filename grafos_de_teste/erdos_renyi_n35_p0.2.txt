@@ -1,6 +1,6 @@
 # Modelo: Erdos Renyi
-# Parâmetros: {'n': 35, 'p': 0.2}
-# Vértices: 35
+# Parametros: {'n': 35, 'p': 0.2}
+# Vertices: 35
 # Arestas: 110
 # FromNodeId	ToNodeId
 0	2
