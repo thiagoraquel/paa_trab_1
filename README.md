@@ -1,5 +1,3 @@
-Claro. Aqui está uma versão mais resumida do arquivo `README.md`, pronta para ser copiada ou baixada.
-
 -----
 
 # Algoritmos para Cobertura Mínima de Vértices
