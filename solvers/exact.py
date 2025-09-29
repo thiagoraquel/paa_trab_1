@@ -6,7 +6,7 @@ from graph import Graph
 class ExactSolver:
     """
     Encontra a cobertura de vértices mínima exata usando um algoritmo
-    recursivo de branch-and-bound com memoização.
+    recursivo de branch-and-bound com memorização.
     """
     def __init__(self, graph: Graph):
         self.graph = graph
