@@ -50,7 +50,7 @@ def selecionar_algoritmo() -> int:
     print("\n" + "=" * 60)
     print("Qual algoritmo você gostaria de executar?")
     print("  [1] - Algoritmo de Aproximação (Fator 2)")
-    print("  [2] - Algoritmo Exato (Ótimo)")
+    print("  [2] - Algoritmo Exato (Solução Ótima)")
     print("  [3] - Busca Tabu (Meta-heurística)")
     print("  [4] - Executar TODOS os algoritmos (apenas no modo individual)")
     print("=" * 60)
@@ -68,6 +68,33 @@ def selecionar_algoritmo() -> int:
         except (KeyboardInterrupt, EOFError):
             print("\nSeleção cancelada. Encerrando o programa.")
             sys.exit()
+
+def selecionar_gerador() -> int:
+    """
+    Exibe um menu para o usuário escolher qual gerador de grafos utilizar.
+    Retorna o número da opção escolhida.
+    """
+    print("\n" + "=" * 60)
+    print("Qual gerador de grafos você gostaria de usar para os experimentos?")
+    print("  [1] - Erdos-Renyi")
+    print("  [2] - Barabasi-Albert")
+    print("  [3] - Watts-Strogatz")
+    print("=" * 60)
+    
+    while True:
+        try:
+            escolha_str = input("Digite o número do gerador (1-3): ")
+            escolha_int = int(escolha_str)
+            if 1 <= escolha_int <= 3:
+                return escolha_int
+            else:
+                print("Opção inválida. Por favor, digite um número de 1 a 3.")
+        except ValueError:
+            print("Entrada inválida. Por favor, digite apenas o número.")
+        except (KeyboardInterrupt, EOFError):
+            print("\nSeleção cancelada. Encerrando o programa.")
+            sys.exit()
+
 
 def main():
     """
@@ -138,12 +165,14 @@ def main():
                 stop = int(input("Tamanho final do grafo (stop): "))
                 step = int(input("Incremento (step): "))
 
+                gerador = selecionar_gerador()
+
                 algorithm = selecionar_algoritmo()
                 if algorithm == 4:
                     print("Para experimentos, por favor escolha apenas um algoritmo (1, 2 ou 3).")
                     continue
                 repetitions = int(input("Número de repetições por grafo (para cálculo da média): "))
-                run_experiments(start, stop, step, algorithm, repetitions)
+                run_experiments(start, stop, step, algorithm, repetitions, gerador)
                 plot_experiments(f"experiments/resultados_{ 'aproximado' if algorithm == 1 else 'exato' if algorithm == 2 else 'busca_tabu' }.csv")
                 break
 
