@@ -5,6 +5,9 @@ from graph import Graph
 from solvers.approximation import solve_approximation
 from solvers.exact import ExactSolver
 from solvers.tabu_search import solve_tabu_search
+from solvers.branch_and_bound import BranchAndBoundSolver
+from solvers.backtracking import BacktrackingSolver
+from solvers.iddfs import IDDFSSolver
 from visualization import visualizar_grafo_com_cobertura
 from run_experiments import run_experiments
 from plot_experiments import plot_experiments
@@ -109,12 +112,31 @@ def main():
                     if algoritmo_escolhido in [2, 4]:
                         # ATENÇÃO: Pode ser muito lento para grafos com mais de 40 vértices.
                         if grafo.num_vertices < 41:
-                            print("\n--- 2. Algoritmo Exato ---")
+                            print("\n--- 2. Algoritmo Exato ---\n Alg dinâmico e memoização")
                             exact_solver = ExactSolver(grafo)
                             optimal_cover_nodes = exact_solver.solve()
                             print(f"Vértices encontrados: {sorted(list(optimal_cover_nodes))}")
                             print(f"Tamanho da cobertura ótima: {len(optimal_cover_nodes)}")
                             visualizar_grafo_com_cobertura(grafo, optimal_cover_nodes, "Cobertura - Algoritmo Exato (Ótimo)")
+
+                            print("\n--algoritmo branch e bound")
+                            branch_and_bound = BranchAndBoundSolver(grafo)
+                            optimal_cover_nodes = branch_and_bound.solve()
+                            print(f"Vértices encontrados: {sorted(list(optimal_cover_nodes))}")
+                            print(f"Tamanho da cobertura ótima: {len(optimal_cover_nodes)}")
+
+                            print("\n--algoritmo backtracking")
+                            backtracking = BacktrackingSolver(grafo)
+                            optimal_cover_nodes = backtracking.solve()
+                            print(f"Vértices encontrados: {sorted(list(optimal_cover_nodes))}")
+                            print(f"Tamanho da cobertura ótima: {len(optimal_cover_nodes)}")
+
+                            print("\n--algoritmo depth first")
+                            iddfs = IDDFSSolver(grafo)
+                            optimal_cover_nodes = iddfs.solve()
+                            print(f"Vértices encontrados: {sorted(list(optimal_cover_nodes))}")
+                            print(f"Tamanho da cobertura ótima: {len(optimal_cover_nodes)}")
+                            
                         else:
                             print("\n--- 2. Algoritmo Exato (PULADO) ---")
                             print(f"O grafo com {grafo.num_vertices} vértices é muito grande para o algoritmo exato.")
