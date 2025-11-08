@@ -2,7 +2,7 @@ import time
 import csv
 import networkx as nx
 from solvers.approximation import solve_approximation
-from solvers.exact import ExactSolver
+from solvers.dinamic_memo import DinamicMemoSolver
 from solvers.tabu_search import solve_tabu_search
 from graph import Graph
 
@@ -42,7 +42,7 @@ def run_experiments(start: int, stop: int, step: int, algorithm: int, repetition
                             if algorithm == 1:
                                 solve_approximation(grafo)
                             elif algorithm == 2:
-                                solver = ExactSolver(grafo)
+                                solver = DinamicMemoSolver(grafo)
                                 solver.solve()
                             elif algorithm == 3:
                                 solve_tabu_search(grafo)

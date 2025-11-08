@@ -7,17 +7,47 @@ def plot_experiments(filename: str = "experiments/results.csv", algoritmo: int =
     """
     df = pd.read_csv(filename)
 
+    # Dicionários para mapear os códigos para nomes legíveis
+    nomes_algoritmos = {
+        1: "Aproximado",
+        2: "Exato",
+        3: "Busca Tabu",
+        4: "Algoritmo 4", # Substitua pelo nome real
+        5: "Algoritmo 5"  # Substitua pelo nome real
+    }
+
+    nomes_geradores = {
+        1: "Erdos-Renyi",
+        2: "Barabasi-Albert",
+        3: "Watts-Strogatz"
+    }
+
+    # Obtém os nomes com base nos códigos, usando um valor padrão se não encontrar
+    nome_algoritmo = nomes_algoritmos.get(algoritmo, f"Algoritmo {algoritmo}")
+    nome_gerador = nomes_geradores.get(gerador, f"Gerador {gerador}")
+
+    plt.figure(figsize=(10, 6)) # Opcional: define um tamanho maior para o gráfico
+
     for solver in df["Algoritmo"].unique():
         subset = df[df["Algoritmo"] == solver]
+        # Ordena por número de vértices para garantir que a linha seja plotada corretamente
+        subset = subset.sort_values(by="Vertices")
         plt.plot(subset["Vertices"], subset["Tempo Médio (s)"], marker='o', label=solver)
 
-    if algoritmo == 2:  # Exato
+    # Se o algoritmo for Exato (código 2), usa escala logarítmica
+    if algoritmo == 2:
         plt.yscale("log")
+        plt.ylabel("Tempo médio de execução (s) - Escala Log") # Atualiza o label para indicar log
+    else:
+        plt.ylabel("Tempo médio de execução (s)")
 
-    plt.title(f"Complexidade Temporal - Cobertura Mínima de Vértices - {"Aproximado" if algoritmo == 1 else "Exato" if algoritmo == 2 else "Busca Tabu"} - {"Erdos-Renyi" if gerador == 1 else "Barabasi-Albert" if gerador == 2 else "Watts-Strogatz"}")
+    # Título usando os nomes obtidos dos dicionários.
+    # Uso de aspas simples na f-string externa para evitar conflitos se houver aspas internas (embora não haja agora).
+    plt.title(f'Complexidade Temporal - CMV - {nome_algoritmo} - {nome_gerador}')
     plt.xlabel("Número de vértices (n)")
-    plt.ylabel("Tempo médio de execução (s)")
     plt.legend()
-    plt.grid(True)
+    plt.grid(True, which="both", ls="--", alpha=0.5) # Grid melhorado para escala log
+    
+    plt.tight_layout() # Ajusta o layout para evitar cortes
     plt.savefig("experiments/resultados.png", dpi=300)
     plt.show()

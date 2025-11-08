@@ -3,7 +3,7 @@ import glob
 import sys
 from graph import Graph
 from solvers.approximation import solve_approximation
-from solvers.exact import ExactSolver
+from solvers.dinamic_memo import DinamicMemoSolver
 from solvers.tabu_search import solve_tabu_search
 from solvers.branch_and_bound import BranchAndBoundSolver
 from solvers.backtracking import BacktrackingSolver
@@ -53,19 +53,21 @@ def selecionar_algoritmo() -> int:
     print("\n" + "=" * 60)
     print("Qual algoritmo você gostaria de executar?")
     print("  [1] - Algoritmo de Aproximação (Fator 2)")
-    print("  [2] - Algoritmo Exato (Solução Ótima)")
-    print("  [3] - Busca Tabu (Meta-heurística)")
-    print("  [4] - Executar TODOS os algoritmos (apenas no modo individual)")
+    print("  [2] - Algoritmo Exato Dinâmico com Memoização (Ótimo)")
+    print("  [3] - Algoritmo Exato Backtracking com Poda Upperbound (Ótimo)")
+    print("  [4] - Algoritmo Exato Iterativo de Aprofundamento (Ótimo)")
+    print("  [5] - Busca Tabu (Meta-heurística)")
+    print("  [6] - Executar TODOS os algoritmos (apenas no modo individual)")
     print("=" * 60)
     
     while True:
         try:
-            escolha_str = input("Digite o número do algoritmo (1-4): ")
+            escolha_str = input("Digite o número do algoritmo (1-6): ")
             escolha_int = int(escolha_str)
-            if 1 <= escolha_int <= 4:
+            if 1 <= escolha_int <= 6:
                 return escolha_int
             else:
-                print("Opção inválida. Por favor, digite um número de 1 a 4.")
+                print("Opção inválida. Por favor, digite um número de 1 a 6.")
         except ValueError:
             print("Entrada inválida. Por favor, digite apenas o número.")
         except (KeyboardInterrupt, EOFError):
@@ -127,55 +129,59 @@ def main():
 
                     # Executa o(s) algoritmo(s) com base na escolha
                     
-                    # Se a escolha for 1 (Aproximação) ou 4 (Todos)
-                    if algoritmo_escolhido in [1, 4]:
-                        print("\n--- 1. Algoritmo de Aproximação (Fator 2) ---")
+                    if algoritmo_escolhido in [1, 6]:
+                        print("\n--- Algoritmo de Aproximação (Fator 2) ---")
                         approx_cover = solve_approximation(grafo)
                         print(f"Vértices encontrados: {sorted(list(approx_cover))}")
                         print(f"Tamanho da cobertura: {len(approx_cover)}")
                         visualizar_grafo_com_cobertura(grafo, approx_cover, "Cobertura - Algoritmo de Aproximação")
 
-                    # Se a escolha for 2 (Exato) ou 4 (Todos)
-                    if algoritmo_escolhido in [2, 4]:
-                        # ATENÇÃO: Pode ser muito lento para grafos com mais de 40 vértices.
+                    if algoritmo_escolhido in [2, 6]:
                         if grafo.num_vertices < 41:
-                            print("\n--- 2. Algoritmo Exato ---\n Alg dinâmico e memoização")
-                            exact_solver = ExactSolver(grafo)
-                            optimal_cover_nodes = exact_solver.solve()
+                            print("\n--- Algoritmo Dinâmico com Memoização ---\n")
+                            dinamic_memo = DinamicMemoSolver(grafo)
+                            optimal_cover_nodes = dinamic_memo.solve()
                             print(f"Vértices encontrados: {sorted(list(optimal_cover_nodes))}")
                             print(f"Tamanho da cobertura ótima: {len(optimal_cover_nodes)}")
-                            visualizar_grafo_com_cobertura(grafo, optimal_cover_nodes, "Cobertura - Algoritmo Exato (Ótimo)")
+                            visualizar_grafo_com_cobertura(grafo, optimal_cover_nodes, "Cobertura - Algoritmo Exato (Ótimo)")  
+                        else:
+                            print("\n--- Algoritmo Exato (PULADO) ---")
+                            print(f"O grafo com {grafo.num_vertices} vértices é muito grande para o algoritmo exato.")
 
-                            print("\n--algoritmo branch e bound")
-                            branch_and_bound = BranchAndBoundSolver(grafo)
-                            optimal_cover_nodes = branch_and_bound.solve()
-                            print(f"Vértices encontrados: {sorted(list(optimal_cover_nodes))}")
-                            print(f"Tamanho da cobertura ótima: {len(optimal_cover_nodes)}")
-
+                    if algoritmo_escolhido in [3, 6]:
+                        if grafo.num_vertices < 41:
                             print("\n--algoritmo backtracking")
                             backtracking = BacktrackingSolver(grafo)
                             optimal_cover_nodes = backtracking.solve()
                             print(f"Vértices encontrados: {sorted(list(optimal_cover_nodes))}")
                             print(f"Tamanho da cobertura ótima: {len(optimal_cover_nodes)}")
+                        else:
+                            print("\n--- Algoritmo Exato (PULADO) ---")
+                            print(f"O grafo com {grafo.num_vertices} vértices é muito grande para o algoritmo exato.")
 
+                    if algoritmo_escolhido in [4, 6]:
+                        if grafo.num_vertices < 41:    
                             print("\n--algoritmo depth first")
                             iddfs = IDDFSSolver(grafo)
                             optimal_cover_nodes = iddfs.solve()
                             print(f"Vértices encontrados: {sorted(list(optimal_cover_nodes))}")
                             print(f"Tamanho da cobertura ótima: {len(optimal_cover_nodes)}")
-                            
                         else:
-                            print("\n--- 2. Algoritmo Exato (PULADO) ---")
+                            print("\n--- Algoritmo Exato (PULADO) ---")
                             print(f"O grafo com {grafo.num_vertices} vértices é muito grande para o algoritmo exato.")
 
-                    # Se a escolha for 3 (Busca Tabu) ou 4 (Todos)
-                    if algoritmo_escolhido in [3, 4]:
-                        print("\n--- 3. Busca Tabu ---")
-                        ts_cover, ts_cost = solve_tabu_search(grafo, max_iters=1000, rng_seed=42)
-                        print(f"Vértices encontrados: {sorted(ts_cover)}")
-                        print(f"Tamanho da cobertura: {len(ts_cover)}")
-                        print(f"Custo final da solução (tamanho + penalidades): {ts_cost}")
-                        visualizar_grafo_com_cobertura(grafo, set(ts_cover), "Cobertura - Busca Tabu")
+                    if algoritmo_escolhido in [5, 6]:
+                        # ATENÇÃO: Pode ser muito lento para grafos com mais de 40 vértices.
+                        if grafo.num_vertices < 41:
+                            print("\n--- Busca Tabu ---")
+                            ts_cover, ts_cost = solve_tabu_search(grafo, max_iters=1000, rng_seed=42)
+                            print(f"Vértices encontrados: {sorted(ts_cover)}")
+                            print(f"Tamanho da cobertura: {len(ts_cover)}")
+                            print(f"Custo final da solução (tamanho + penalidades): {ts_cost}")
+                            visualizar_grafo_com_cobertura(grafo, set(ts_cover), "Cobertura - Busca Tabu")
+                        else:
+                            print("\n--- Algoritmo Exato (PULADO) ---")
+                            print(f"O grafo com {grafo.num_vertices} vértices é muito grande para o algoritmo exato.")
                         
                 print("\n" + "=" * 60)
                 print("Análise concluída.")
@@ -190,8 +196,8 @@ def main():
                 gerador = selecionar_gerador()
 
                 algorithm = selecionar_algoritmo()
-                if algorithm == 4:
-                    print("Para experimentos, por favor escolha apenas um algoritmo (1, 2 ou 3).")
+                if algorithm == 6:
+                    print("Para experimentos, por favor escolha apenas um algoritmo (1, 2, 3, 4 ou 5).")
                     continue
                 repetitions = int(input("Número de repetições por grafo (para cálculo da média): "))
                 run_experiments(start, stop, step, algorithm, repetitions, gerador)

@@ -3,10 +3,10 @@
 from typing import Set, Dict
 from graph import Graph
 
-class ExactSolver:
+class DinamicMemoSolver:
     """
     Encontra a cobertura de vértices mínima exata usando um algoritmo
-    recursivo de branch-and-bound com memorização.
+    dinâmico recursivo com memorização.
     """
     def __init__(self, graph: Graph):
         self.graph = graph
