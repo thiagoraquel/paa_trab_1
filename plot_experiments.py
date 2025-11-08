@@ -11,9 +11,9 @@ def plot_experiments(filename: str = "experiments/results.csv", algoritmo: int =
     nomes_algoritmos = {
         1: "Aproximado",
         2: "Exato",
-        3: "Busca Tabu",
-        4: "Algoritmo 4", # Substitua pelo nome real
-        5: "Algoritmo 5"  # Substitua pelo nome real
+        3: "Backtracking",
+        4: "IDDFS",
+        5: "Busca Tabu",
     }
 
     nomes_geradores = {
@@ -35,7 +35,7 @@ def plot_experiments(filename: str = "experiments/results.csv", algoritmo: int =
         plt.plot(subset["Vertices"], subset["Tempo Médio (s)"], marker='o', label=solver)
 
     # Se o algoritmo for Exato (código 2), usa escala logarítmica
-    if algoritmo == 2:
+    if algoritmo in [2, 3, 4]:  # algoritmos exatos
         plt.yscale("log")
         plt.ylabel("Tempo médio de execução (s) - Escala Log") # Atualiza o label para indicar log
     else:

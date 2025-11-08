@@ -2,7 +2,9 @@ import time
 import csv
 import networkx as nx
 from solvers.approximation import solve_approximation
+from solvers.backtracking import BacktrackingSolver
 from solvers.dinamic_memo import DinamicMemoSolver
+from solvers.iddfs import IDDFSSolver
 from solvers.tabu_search import solve_tabu_search
 from graph import Graph
 
@@ -20,10 +22,11 @@ def nx_to_custom_graph(nx_graph) -> Graph:
     edges = list(nx_graph.edges())
     return Graph(num_vertices, edges)
 
+
 def run_experiments(start: int, stop: int, step: int, algorithm: int, repetitions: int = 40, gerador: int = 1):
                     results = []
                     sizes = list(range(start, stop + 1, step))
-                    algo_name = {1: "Aproximado", 2: "Exato", 3: "Busca_Tabu"}[algorithm]
+                    algo_name = {1: "Aproximado", 2: "Exato", 3: "Backtracking", 4: "IDDFS", 5: "Busca_Tabu"}[algorithm]
                     gerador_name = {1: "Erdos-Renyi", 2: "Barabasi-Albert", 3: "Watts-Strogatz"}[gerador]
 
                     for n in sizes:
@@ -38,15 +41,29 @@ def run_experiments(start: int, stop: int, step: int, algorithm: int, repetition
 
                         times = []
                         for i in range(repetitions):
-                            start_time = time.perf_counter()
                             if algorithm == 1:
+                                start_time = time.perf_counter()
                                 solve_approximation(grafo)
+                                end_time = time.perf_counter()
                             elif algorithm == 2:
                                 solver = DinamicMemoSolver(grafo)
+                                start_time = time.perf_counter()
                                 solver.solve()
+                                end_time = time.perf_counter()
                             elif algorithm == 3:
+                                solver = BacktrackingSolver(grafo)
+                                start_time = time.perf_counter()
+                                solver.solve()
+                                end_time = time.perf_counter()
+                            elif algorithm == 4:
+                                solver = IDDFSSolver(grafo)
+                                start_time = time.perf_counter()
+                                solver.solve()
+                                end_time = time.perf_counter()
+                            elif algorithm == 5:
+                                start_time = time.perf_counter()
                                 solve_tabu_search(grafo)
-                            end_time = time.perf_counter()
+                                end_time = time.perf_counter()
                             elapsed = end_time - start_time
                             times.append(elapsed)
 
