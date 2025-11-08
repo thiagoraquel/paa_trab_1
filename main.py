@@ -201,7 +201,7 @@ def main():
                     continue
                 repetitions = int(input("Número de repetições por grafo (para cálculo da média): "))
                 run_experiments(start, stop, step, algorithm, repetitions, gerador)
-                plot_experiments(f"experiments/resultados_{'erdos-renyi' if gerador == 1 else 'barabasi-albert' if gerador == 2 else 'watts-strogatz'}_{ 'aproximado' if algorithm == 1 else 'exato' if algorithm == 2 else 'busca_tabu' }.csv", algoritmo=algorithm, gerador=gerador)
+                plot_experiments(f"experiments/resultados_{'erdos-renyi' if gerador == 1 else 'barabasi-albert' if gerador == 2 else 'watts-strogatz'}_{ 'aproximado' if algorithm == 1 else 'dinamico' if algorithm == 2 else 'backtracking' if algorithm == 3 else 'iddfs' if algorithm == 4 else 'busca_tabu' }.csv", algoritmo=algorithm, gerador=gerador)
                 break
 
             else:
