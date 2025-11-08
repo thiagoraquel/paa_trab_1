@@ -57,7 +57,7 @@ def selecionar_algoritmo() -> int:
     print("  [3] - Algoritmo Exato Backtracking com Poda Upperbound (Ótimo)")
     print("  [4] - Algoritmo Exato Iterativo de Aprofundamento (Ótimo)")
     print("  [5] - Busca Tabu (Meta-heurística)")
-    print("  [6] - Executar TODOS os algoritmos (apenas no modo individual)")
+    print("  [6] - Executar TODOS os algoritmos acima (CUIDADO: pode ser lento!)")
     print("=" * 60)
     
     while True:
@@ -192,16 +192,21 @@ def main():
                 start = int(input("Tamanho inicial do grafo (start): "))
                 stop = int(input("Tamanho final do grafo (stop): "))
                 step = int(input("Incremento (step): "))
+                unified_plot = input("Deseja gerar gráfico unificado para todos os algoritmos? (s/n): ").strip().lower() == 's'
 
                 gerador = selecionar_gerador()
 
                 algorithm = selecionar_algoritmo()
-                if algorithm == 6:
-                    print("Para experimentos, por favor escolha apenas um algoritmo (1, 2, 3, 4 ou 5).")
-                    continue
+
                 repetitions = int(input("Número de repetições por grafo (para cálculo da média): "))
+
                 run_experiments(start, stop, step, algorithm, repetitions, gerador)
-                plot_experiments(f"experiments/resultados_{'erdos-renyi' if gerador == 1 else 'barabasi-albert' if gerador == 2 else 'watts-strogatz'}_{ 'aproximado' if algorithm == 1 else 'dinamico' if algorithm == 2 else 'backtracking' if algorithm == 3 else 'iddfs' if algorithm == 4 else 'busca_tabu' }.csv", algoritmo=algorithm, gerador=gerador)
+
+                if algorithm == 6 and not unified_plot:
+                    for alg in [1,2,3,4,5]:
+                        plot_experiments(f"experiments/resultados_{'erdos-renyi' if gerador == 1 else 'barabasi-albert' if gerador == 2 else 'watts-strogatz'}_{ 'aproximado' if alg == 1 else 'dinamico' if alg == 2 else 'backtracking' if alg == 3 else 'iddfs' if alg == 4 else 'busca_tabu' }.csv", algoritmo=alg, gerador=gerador, unified=True)
+                else:
+                    plot_experiments(f"experiments/resultados_{'erdos-renyi' if gerador == 1 else 'barabasi-albert' if gerador == 2 else 'watts-strogatz'}_{ 'aproximado' if algorithm == 1 else 'dinamico' if algorithm == 2 else 'backtracking' if algorithm == 3 else 'iddfs' if algorithm == 4 else 'busca_tabu' }.csv", algoritmo=algorithm, gerador=gerador, unified=unified_plot)
                 break
 
             else:

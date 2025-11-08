@@ -1,0 +1,20 @@
+Gerador,Algoritmo,Vertices,Tempo Médio (s),Qualidade Média
+Erdos-Renyi,Backtracking,2,4.9828006012830885e-06,1.0
+Erdos-Renyi,Backtracking,4,2.849248267011717e-06,1.0
+Erdos-Renyi,Backtracking,6,5.815499753225594e-06,1.0
+Erdos-Renyi,Backtracking,8,1.3123850658303127e-05,1.0
+Erdos-Renyi,Backtracking,10,3.761305124498904e-05,1.0
+Erdos-Renyi,Backtracking,12,9.550795002724043e-05,1.0
+Erdos-Renyi,Backtracking,14,0.00023416625408572144,1.0
+Erdos-Renyi,Backtracking,16,0.0007083655000315048,1.0
+Erdos-Renyi,Backtracking,18,0.0018997402010427322,1.0
+Erdos-Renyi,Backtracking,20,0.005170258849102538,1.0
+Erdos-Renyi,Backtracking,22,0.012352981149888365,1.0
+Erdos-Renyi,Backtracking,24,0.041503668450604894,1.0
+Erdos-Renyi,Backtracking,26,0.11995820069860201,1.0
+Erdos-Renyi,Backtracking,28,0.33511429725258496,1.0
+Erdos-Renyi,Backtracking,30,0.9852925038510876,1.0
+Erdos-Renyi,Backtracking,32,3.6961451341987415,1.0
+Erdos-Renyi,Backtracking,34,9.143010017547931,1.0
+Erdos-Renyi,Backtracking,36,25.778738503048952,1.0
+Erdos-Renyi,Backtracking,38,138.39732597480105,1.0
