@@ -7,8 +7,14 @@ Implementação de algoritmos para resolver o problema da Cobertura Mínima de V
 ## Algoritmos Implementados
 
 1.  **Aproximação (Fator 2)**: Rápido e eficiente, garante uma solução no máximo duas vezes maior que a ótima.
-2.  **Exato (Ótimo)**: Encontra a solução ótima através de busca exaustiva. Viável apenas para grafos pequenos (\< 40 vértices).
-3.  **Busca Tabu (Meta-heurística)**: Busca local otimizada para encontrar soluções de alta qualidade em tempo razoável.
+2.  **Algoritmos Exatos (Ótimo)**: Encontram a solução ótima. Viável apenas para grafos pequenos (\< 40 vértices).
+
+    2.1. **Backtracking com Poda Upperbound**: Busca de backtracking que armazena a melhor solução encontrada até agora e realiza poda caso uma árvore de decisão tenha custo maior que a melhor solução armazenada até o momento.
+
+    2.2. **Recursão com Algoritmo Dinâmico e Memoização**: Explora a árvore recursivamente ao buscar em cada aresta escolhida (u,v), a solução com o vértice u incluso na cobertura mínima ou o vértice v. O algoritmo guarda o resultado dos conjuntos de subproblemas já encontrados antes, aumentando a velocidade quando revisitar esses mesmos casos futuramente. 
+
+    2.3. **Aprofundamento Iterativo**: O algoritmo irá procurar a solução com a iteração de uma busca de profundidade limitada, aumentando o orçamento da busca sempre que uma solução não for retornada. Quando a solução for encontrada, ela necessariamente será ótima, pois todos os outros casos com menor orçamento já foram testados anteriormente.
+4.  **Busca Tabu (Meta-heurística)**: Busca local otimizada para encontrar soluções de alta qualidade em tempo razoável.
 
 ## Funcionalidades
 
