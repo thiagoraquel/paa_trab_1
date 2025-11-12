@@ -172,16 +172,12 @@ def main():
 
                     if algoritmo_escolhido in [5, 6]:
                         # ATENÇÃO: Pode ser muito lento para grafos com mais de 40 vértices.
-                        if grafo.num_vertices < 41:
-                            print("\n--- Busca Tabu ---")
-                            ts_cover, ts_cost = solve_tabu_search(grafo, max_iters=1000, rng_seed=42)
-                            print(f"Vértices encontrados: {sorted(ts_cover)}")
-                            print(f"Tamanho da cobertura: {len(ts_cover)}")
-                            print(f"Custo final da solução (tamanho + penalidades): {ts_cost}")
-                            visualizar_grafo_com_cobertura(grafo, set(ts_cover), "Cobertura - Busca Tabu")
-                        else:
-                            print("\n--- Algoritmo Exato (PULADO) ---")
-                            print(f"O grafo com {grafo.num_vertices} vértices é muito grande para o algoritmo exato.")
+                        print("\n--- Busca Tabu ---")
+                        ts_cover, ts_cost = solve_tabu_search(grafo, max_iters=1000, rng_seed=42)
+                        print(f"Vértices encontrados: {sorted(ts_cover)}")
+                        print(f"Tamanho da cobertura: {len(ts_cover)}")
+                        print(f"Custo final da solução (tamanho + penalidades): {ts_cost}")
+                        visualizar_grafo_com_cobertura(grafo, set(ts_cover), "Cobertura - Busca Tabu")
                         
                 print("\n" + "=" * 60)
                 print("Análise concluída.")
