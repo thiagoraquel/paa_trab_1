@@ -63,14 +63,14 @@ def run_experiments(start: int, stop: int, step: int, algorithm: int, repetition
         2: ("Dinamico", lambda g: DinamicMemoSolver(g).solve()),
         3: ("Backtracking", lambda g: BacktrackingSolver(g).solve()),
         4: ("IDDFS", lambda g: IDDFSSolver(g).solve()),
-        5: ("Busca_Tabu", lambda g: solve_tabu_search(g)),
+        5: ("Busca_Tabu", lambda g: solve_tabu_search(g)[0]),
     }
 
     gerador_name, gerador_func = geradores[gerador]
 
     # Se for executar todos, exclui o Dinâmico (já que ele será executado separadamente)
     if algorithm == 6:
-        algoritmos_escolhidos = [v for k, v in algoritmos.items() if k != 2 and k != 5]
+        algoritmos_escolhidos = [v for k, v in algoritmos.items() if k != 2]
     else:
         algoritmos_escolhidos = [algoritmos[algorithm]]
 
