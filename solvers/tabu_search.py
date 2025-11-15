@@ -1,13 +1,9 @@
 import random
 from typing import List, Tuple, Dict, Optional
-# Presume que 'graph' tem os métodos:
-# graph.num_vertices -> int
-# graph.count_uncovered_edges(cover) -> int
-# graph.get_neighbors(v) -> List[int]
 from graph import Graph 
 
 def _cost_function(graph: Graph, cover: List[bool], penalty: int) -> int:
-    """Função de custo para a Busca Tabu. (Usada apenas no início)"""
+    """Função de custo para a Busca Tabu."""
     uncovered = graph.count_uncovered_edges(cover)
     size = sum(cover)
     return uncovered * penalty + size
@@ -52,7 +48,7 @@ def solve_tabu_search(
     graph: Graph,
     max_iters: int = 10000,
     tabu_tenure: int = 7,
-    penalty: int = 1000,
+    penalty: int = None, # Mudamos para None para calcular dinamicamente
     rng_seed: Optional[int] = None
 ) -> Tuple[List[int], int]:
     """
@@ -60,28 +56,44 @@ def solve_tabu_search(
     """
     rng = random.Random(rng_seed)
     
+    # --- CORREÇÃO 1: Penalidade Dinâmica ---
+    if penalty is None or penalty <= graph.num_vertices:
+        penalty = graph.num_vertices + 1
+
     # --- Inicialização ---
-    current = [True] * graph.num_vertices
-    # Custo total é calculado APENAS UMA VEZ
-    current_cost = _cost_function(graph, current, penalty) 
+    
+    # 1. 'best' (Bandeira do Recorde) começa na primeira solução VÁLIDA conhecida.
+    best = [True] * graph.num_vertices
+    best_cost = _cost_function(graph, best, penalty) # Custo será 'graph.num_vertices'
+    
+    # 2. 'current' (Explorador) começa em um ponto aleatório 50/50.
+    #    (Substitui a linha: current = [True] * graph.num_vertices)
+    current = [rng.choice([True, False]) for _ in range(graph.num_vertices)]
+    
+    # O custo e a contagem de descobertas do Explorador são calculados
+    current_uncovered_count = graph.count_uncovered_edges(current) # Lento, mas só faz 1 vez
+    current_size = sum(current)
+    current_cost = (current_uncovered_count * penalty) + current_size
+    
+    # Se, por sorte, a solução aleatória for válida E melhor, ela se torna o 'best'
+    if current_uncovered_count == 0 and current_cost < best_cost:
+        best = current[:]
+        best_cost = current_cost
 
-    best = current[:]
-    best_cost = current_cost
-
-    tabu: Dict[Tuple[int, bool], int] = {} # (vértice, novo_estado) -> iteração_tabu
+    tabu: Dict[Tuple[int, bool], int] = {} 
 
     for it in range(1, max_iters + 1):
         best_move = None
-        best_move_cost = float("inf") # Custo total do melhor vizinho
+        best_move_cost = float("inf")
+        
+        # --- Variável inútil (best_move_delta_uncovered) foi REMOVIDA daqui ---
 
         # --- Exploração da Vizinhança (Otimizada) ---
         for v in range(graph.num_vertices):
             
-            # 1. Calcula o delta do custo (muito rápido)
             delta_cost = _calculate_delta_cost(graph, current, v, penalty)
             new_cost = current_cost + delta_cost
             
-            # 2. Verifica se o movimento é tabu
             new_state = not current[v]
             is_tabu = tabu.get((v, new_state), 0) > it
 
@@ -92,30 +104,36 @@ def solve_tabu_search(
                     best_move = v
 
         if best_move is None:
-            # Nenhum movimento válido encontrado (pode acontecer)
             break 
 
         # --- Aplica o Melhor Movimento ---
         v = best_move
         old_state = current[v]
         
-        # Atualiza a solução atual e seu custo (sem recalcular)
+        # Recalcula o delta de arestas descobertas apenas para o movimento escolhido
+        delta_uncovered_count = 0
+        for u in graph.list_adj[v]:
+            if not current[u]:
+                if old_state: # Estava True (removendo) -> fica descoberto
+                    delta_uncovered_count += 1
+                else: # Estava False (adicionando) -> fica coberto
+                    delta_uncovered_count -= 1
+        
+        current_uncovered_count += delta_uncovered_count
+        
         current[v] = not old_state
         current_cost = best_move_cost
         
-        # Adiciona o inverso do movimento à lista tabu
-        # (Proíbe mover 'v' de volta para 'old_state')
         tabu[(v, old_state)] = it + tabu_tenure
 
         # --- Atualiza a Melhor Solução Global ---
-        if current_cost < best_cost:
+        # --- CORREÇÃO 2: Blindagem Lógica ---
+        # Só atualizamos o 'best' se o custo for menor E (CRUCIAL) se a solução for válida.
+        if current_cost < best_cost and current_uncovered_count == 0:
             best = current[:]
             best_cost = current_cost
             
     cover_vertices = [i for i, in_cover in enumerate(best) if in_cover]
-    
-    # Recalcula o custo final da 'best' para garantir 
-    # (apenas por segurança, 'best_cost' deve estar correto)
     final_best_cost = _cost_function(graph, best, penalty)
     
     return cover_vertices, final_best_cost
