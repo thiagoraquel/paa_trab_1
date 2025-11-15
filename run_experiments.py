@@ -78,7 +78,7 @@ def run_experiments(start: int, stop: int, step: int, algorithm: int, repetition
     print("Gerando instâncias aleatórias compartilhadas...")
     instancias = gerar_instancias(gerador_func, sizes, repetitions)
 
-    # Executa o Dinâmico uma única vez (para calculo de tempo e solução ótima, que será usada para qualidade)
+    # Executa o Dinâmico uma única vez (para calculo de tempo e solução ótima, que será usada para calculo de fator de aproximacao)
     if algorithm != 2:  # Se for apenas o Dinâmico, não precisa rodar duas vezes
         print("Calculando soluções ótimas com algoritmo Dinâmico...")
         solucoes_otimas = {}
@@ -106,7 +106,7 @@ def run_experiments(start: int, stop: int, step: int, algorithm: int, repetition
         filename_dyn = f"experiments/resultados_{gerador_name.replace(' ', '_').lower()}_dinamico.csv"
         with open(filename_dyn, "w", newline="") as f:
             writer = csv.writer(f)
-            writer.writerow(["Gerador", "Algoritmo", "Vertices", "Tempo Médio (s)", "Qualidade Média"])
+            writer.writerow(["Gerador", "Algoritmo", "Vertices", "Tempo Médio (s)", "Fator de Aproximação"])
             filtered_results = [row for row in results if row[1] == "Dinamico"]
             writer.writerows(filtered_results)
 
@@ -116,7 +116,7 @@ def run_experiments(start: int, stop: int, step: int, algorithm: int, repetition
     for algo_name, algo_func in algoritmos_escolhidos:
         print(f"\nExecutando {algo_name}...")
         for n in sizes:
-            tempos, qualidades = [], []
+            tempos, fator_aprox = [], []
             for i, grafo in enumerate(instancias[n]):  # mesmas instâncias para todos os algoritmos
                 start_time = time.perf_counter()
                 solucao_alg = algo_func(grafo)
@@ -124,12 +124,12 @@ def run_experiments(start: int, stop: int, step: int, algorithm: int, repetition
 
                 tempos.append(end_time - start_time)
                 tamanho_solucao_otima = solucoes_otimas[n][i]
-                qualidades.append(len(solucao_alg) / tamanho_solucao_otima)
+                fator_aprox.append(len(solucao_alg) / tamanho_solucao_otima)
 
             avg_time = sum(tempos) / repetitions
-            avg_quality = sum(qualidades) / repetitions
-            results.append([gerador_name, algo_name, n, avg_time, avg_quality])
-            print(f"{algo_name} | n={n} | tempo médio = {avg_time:.5f}s | qualidade média = {avg_quality:.5f}")
+            avg_factor = sum(fator_aprox) / repetitions
+            results.append([gerador_name, algo_name, n, avg_time, avg_factor])
+            print(f"{algo_name} | n={n} | tempo médio = {avg_time:.5f}s | fator de aproximação = {avg_factor:.5f}")
 
         # salva CSV com colunas: Gerador, Algoritmo, Vertices, Repeticao, Tempo (s)
         filename = f"experiments/resultados_{gerador_name.replace(' ', '_').lower()}_{algo_name.lower()}.csv"
